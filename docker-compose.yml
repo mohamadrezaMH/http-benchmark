@@ -1,0 +1,9 @@
+services:
+  backend:
+    build: ./app
+    ports:
+      - "8000:8000" 
+  web:
+    image: nginx
+    ports:
+      - "8080:80"
