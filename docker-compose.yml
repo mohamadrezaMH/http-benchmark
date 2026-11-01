@@ -4,7 +4,7 @@ services:
     ports:
       - "8000:8000" #host port : container port
     environment:
-      WEB_CONCURRENCY: 4
+      WEB_CONCURRENCY: 1 #define variable 
   web:
     image: nginx
     ports:

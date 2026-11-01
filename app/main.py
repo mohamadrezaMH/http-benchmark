@@ -19,6 +19,6 @@ async def root():
     logger.info("Request completed: %s", processing_time_ms)
     return {
         "status" : "success" ,
-        "message": "result",
-        "processing_time_ms" : processing_time_ms
+        "message": "Request processed",
+        "processing_time_ms" :  round(processing_time_ms, 2)
             }
