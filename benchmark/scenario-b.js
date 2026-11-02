@@ -38,12 +38,20 @@ export const options = {
 export default function () {
     const response = http.get(`${BASE_URL}/api/test`);
 
+    // check(response, {
+    //     'status is 200': (r) => r.status === 200,
+    //     'response has success status': (r) => {
+    //         return r.json('status') === 'success';
+    //     },
+    // });
     check(response, {
-        'status is 200': (r) => r.status === 200,
-        'response has success status': (r) => {
-            return r.json('status') === 'success';
-        },
-    });
+    'status is 200': (r) => r.status === 200,
+    'response has success status': (r) => {
+        return r.status === 200 &&
+            r.body !== null &&
+            r.json('status') === 'success';
+    },
+});
 
     sleep(SLEEP_TIME);
 }

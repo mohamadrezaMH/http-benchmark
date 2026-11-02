@@ -4,10 +4,10 @@ services:
     ports:
       - "8000:8000" #host port : container port
     environment:
-      WEB_CONCURRENCY: 1 #define variable 
+      WEB_CONCURRENCY: 4 #define variable 
   web:
     image: nginx
     ports:
       - "8080:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # host address : container address : read-only
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # host address : container address : read-only /// do bind mount
