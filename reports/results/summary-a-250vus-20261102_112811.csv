@@ -1,0 +1,2 @@
+﻿"Scenario","Workers","VUs","DurationSeconds","Requests","RPS","AvgLatencyMs","P50LatencyMs","P90LatencyMs","P95LatencyMs","MaxLatencyMs","FailedRequests","FailureRate","PassedChecks","FailedChecks"
+"A","1","250","60","60442","1002.2345991225349","147.76941991496025","137.5987","190.5314","226.72717999999995","357.5725","42","0.000694881042983356","120800","84"

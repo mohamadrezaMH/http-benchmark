@@ -33,6 +33,7 @@ desktop.ini
 # Generated benchmark results
 reports/results/*
 !reports/results/.gitkeep
+!reports/results/summary-*.csv
 
 # Temporary files
 *.tmp

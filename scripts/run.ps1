@@ -63,6 +63,10 @@ try {
 
     $metricsPath = Join-Path $resultsDir "metrics-$($Scenario.ToLower())-$($VUS)vus-$timestamp.csv"
 
+    $summaryPath = Join-Path $resultsDir "k6-summary-$($Scenario.ToLower())-$($VUS)vus-$timestamp.json"
+
+    $summaryCsvPath = Join-Path $resultsDir "summary-$($Scenario.ToLower())-$($VUS)vus-$timestamp.csv"
+
     Write-Host ""
     Write-Host "=================================="
     Write-Host "       HTTP BENCHMARK RUNNER"
@@ -159,9 +163,92 @@ try {
         -e "DURATION=${Duration}s" `
         -e "BASE_URL=$baseUrl" `
         --out "json=$jsonPath" `
+        --summary-export "$summaryPath" `
         $testScript
 
     $k6ExitCode = $LASTEXITCODE
+
+    # -------------------------
+# Export benchmark summary
+# -------------------------
+
+if (Test-Path $summaryPath) {
+
+    $summary = Get-Content $summaryPath -Raw | ConvertFrom-Json
+
+    
+function Get-K6Value {
+    param(
+        $SummaryObject,
+        [string]$Metric,
+        [string]$Field
+    )
+
+    $metricObject = $SummaryObject.metrics.PSObject.Properties[$Metric]
+
+    if ($null -eq $metricObject) {
+        return $null
+    }
+
+    $fieldObject = $metricObject.Value.PSObject.Properties[$Field]
+
+    if ($null -eq $fieldObject) {
+        return $null
+    }
+
+    return $fieldObject.Value
+}
+
+
+    $requestCount = Get-K6Value $summary "http_reqs" "count"
+    $rps = Get-K6Value $summary "http_reqs" "rate"
+
+    $avgLatency = Get-K6Value $summary "http_req_duration" "avg"
+    $p50Latency = Get-K6Value $summary "http_req_duration" "med"
+    $p90Latency = Get-K6Value $summary "http_req_duration" "p(90)"
+    $p95Latency = Get-K6Value $summary "http_req_duration" "p(95)"
+    $maxLatency = Get-K6Value $summary "http_req_duration" "max"
+
+    $failureRate = Get-K6Value $summary "http_req_failed" "value"
+
+$failedRequests = if ($null -ne $failureRate -and $null -ne $requestCount) {
+    [math]::Round($failureRate * $requestCount)
+}
+else {
+    $null
+}
+
+    $passedChecks = Get-K6Value $summary "checks" "passes"
+    $failedChecks = Get-K6Value $summary "checks" "fails"
+
+    $summaryRow = [PSCustomObject]@{
+        Scenario        = $Scenario
+        Workers         = $workerCount
+        VUs             = $VUS
+        DurationSeconds = $Duration
+        Requests        = $requestCount
+        RPS             = $rps
+        AvgLatencyMs    = $avgLatency
+        P50LatencyMs    = $p50Latency
+        P90LatencyMs    = $p90Latency
+        P95LatencyMs    = $p95Latency
+        MaxLatencyMs    = $maxLatency
+        FailedRequests  = $failedRequests
+        FailureRate     = $failureRate
+        PassedChecks    = $passedChecks
+        FailedChecks    = $failedChecks
+    }
+
+    $summaryRow | Export-Csv `
+        -Path $summaryCsvPath `
+        -NoTypeInformation `
+        -Encoding UTF8
+
+    Write-Host "Summary CSV created: $summaryCsvPath"
+}
+else {
+    Write-Warning "k6 summary file was not created."
+}
 
     # -------------------------
     # Wait for metrics collection
@@ -199,6 +286,7 @@ try {
     Write-Host ""
     Write-Host "JSON results: $jsonPath"
     Write-Host "Metrics CSV:  $metricsPath"
+    Write-Host "Summary CSV:  $summaryCsvPath"
     Write-Host "=================================="
 
     if ($k6ExitCode -ne 0) {
